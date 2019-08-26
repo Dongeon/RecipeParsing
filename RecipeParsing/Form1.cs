@@ -29,10 +29,13 @@ namespace RecipeParsing
             KNS kns = new KNS();
             Global gl = new Global();
             string sDirPath = kns.Rename(System.AppDomain.CurrentDomain.BaseDirectory + "RECIPE\\KNS\\WBK01\\UPLOAD\\", "FDFB162080061");
-            Global.KnsParaList = kns.KNSParaPARSE(sDirPath, "FDFB162080061");
-            Global.KnsWireList = kns.KNSWirePARSE(sDirPath, "FDFB162080061");
-            Global.FilePath = System.AppDomain.CurrentDomain.BaseDirectory + "RECIPE\\KNS\\WBK01\\UPLOAD\\";
+
+            Global.FilePath = sDirPath;
             Global.RecipeName = "FDFB162080061";
+
+            Global.KnsParaList = kns.KNSParaPARSE(Global.FilePath, Global.RecipeName);
+            Global.KnsWireList = kns.KNSWirePARSE(Global.FilePath, Global.RecipeName);
+            
             this.Text = Global.RecipeName;
             dataGridViewPara.DataSource = Global.KnsParaList;
             dataGridViewWM.DataSource = Global.KnsWireList;
@@ -141,6 +144,8 @@ namespace RecipeParsing
                     this.Text = Global.RecipeName;
                     dataGridViewPara.DataSource = Global.KnsParaList;
                     dataGridViewWM.DataSource = Global.KnsWireList;
+
+                    lblStatus.Text = null;
                 }
                 else if (res[0].Contains("SKW"))
                 {
@@ -190,6 +195,14 @@ namespace RecipeParsing
                 KNS kns = new KNS();
                 kns.knsParameterChangeSave();
                 kns.knsWiremapChangeSave();
+
+                Global.KnsParaList = kns.KNSParaPARSE(Global.FilePath, Global.RecipeName);
+                Global.KnsWireList = kns.KNSWirePARSE(Global.FilePath, Global.RecipeName);
+
+                this.Text = Global.RecipeName;
+                dataGridViewPara.DataSource = Global.KnsParaList;
+                dataGridViewWM.DataSource = Global.KnsWireList;
+
                 lblStatus.Text = null;
             }
             else
@@ -288,15 +301,14 @@ namespace RecipeParsing
                     dblIndx = null;
                 }
                 revision = null;
+                //-- Revision flag
+                if (Global.changeKnsParaList.Count != 0 || Global.changeKnsWireList.Count != 0)
+                    lblStatus.Text = "Revision";
             }
             else if (Global.FilePath.Contains("SKW"))
             {
 
             }
-            
-            //-- Revision flag
-            if(Global.changeKnsParaList.Count != 0 || Global.changeKnsWireList.Count != 0)
-                lblStatus.Text = "Revision";
         }
 
         private void dataGridViewWM_CellValueChanged(object sender, DataGridViewCellEventArgs e)
@@ -305,6 +317,75 @@ namespace RecipeParsing
             if (Global.FilePath.Contains("KNS"))
             {
                 RecipeConfigKnsWm revision = Global.KnsWireList[e.RowIndex];
+                KNS kns = new KNS();
+                //-- 범위검사
+
+                if (e.ColumnIndex == 5 || e.ColumnIndex == 6)
+                {
+                    revision.RESULT_X_VALUE = kns.calculationResult(revision.MASTER_X_VALUE, revision.WIRE_X_VALUE);
+                    revision.RESULT_Y_VALUE = kns.calculationResult(revision.MASTER_Y_VALUE, revision.WIRE_Y_VALUE);
+
+                    revision.X_LSL = kns.calculationLsl(revision.RESULT_X_VALUE, revision.WB_VALUE);
+                    revision.X_USL = kns.calculationUsl(revision.RESULT_X_VALUE, revision.WB_VALUE);
+                    revision.Y_LSL = kns.calculationLsl(revision.RESULT_Y_VALUE, revision.WB_VALUE);
+                    revision.Y_USL = kns.calculationUsl(revision.RESULT_Y_VALUE, revision.WB_VALUE);
+
+                    if(kns.valid(revision.RESULT_X_VALUE, revision.X_LSL, revision.X_USL, revision.RESULT_Y_VALUE, revision.Y_LSL, revision.Y_USL))
+                    {
+                        MessageBox.Show("out of range.");
+                        return;
+                    }
+                    //if (Convert.ToInt32(revision.PARA_VALUE) > Convert.ToInt32(revision.PARA_MAX) || Convert.ToInt32(revision.PARA_VALUE) < Convert.ToInt32(revision.PARA_MIN))
+                    //{
+                    //    MessageBox.Show("out of range.");
+                    //    return;
+                    //}
+                }
+                else
+                {
+                    MessageBox.Show("바꿀수 없는 항목입니다.");
+                    //-- roll back
+                    return;
+                }
+
+                //-- changeKnsParaList 의 중복 검사
+
+                if (Global.changeKnsWireList.Count == 0)
+                    Global.changeKnsWireList.Add(revision);
+                else
+                {
+                    List<int> dblIndx = new List<int>();
+
+                    //-- set check list
+                    for (int i = 0 ; i < Global.changeKnsWireList.Count ; i++)
+                    {
+                        string checkGroupItem = Global.changeKnsParaList[i].GROUP_ID + "/" + Global.changeKnsWireList[i].ITEM_ID;
+                        string revisionGroupItem = revision.GROUP_ID + "/" + revision.ITEM_ID;
+                        if (checkGroupItem == revisionGroupItem)
+                        {
+                            dblIndx.Add(i);
+                        }
+                    }
+
+                    if (dblIndx.Count == 0)
+                    {
+                        Global.changeKnsWireList.Add(revision);
+                    }
+                    else
+                    {
+                        foreach (int removeIndex in dblIndx)
+                        {
+                            Global.changeKnsWireList.RemoveAt(removeIndex);
+                            Global.changeKnsWireList.Add(revision);
+                        }
+
+                    }
+                    dblIndx = null;
+                    //-- Revision flag
+                    if (Global.changeKnsParaList.Count != 0 || Global.changeKnsWireList.Count != 0)
+                        lblStatus.Text = "Revision";
+                }
+
                 Global.changeKnsWireList.Add(revision);
                 revision = null;
             }
@@ -312,9 +393,8 @@ namespace RecipeParsing
             {
 
             }
-            
-            //-- Revision flag
-            lblStatus.Text = "Revision";
+
+
         }
     }
 }

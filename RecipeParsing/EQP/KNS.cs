@@ -332,6 +332,7 @@ namespace RecipeParsing
             List<RecipeConfigKnsPrm> RecipeParaList = new List<RecipeConfigKnsPrm>();
             ArrayList RecipeWireList = new ArrayList();
 
+            #region
             //-- 1. 이름변경 'Recipename.tgz', 2. TGZ 압축해제(untgz_RECIPENAME)
 
             //DI = new System.IO.DirectoryInfo(filePath);
@@ -360,6 +361,7 @@ namespace RecipeParsing
 
 
             //DI = null;
+            #endregion
             DI = new System.IO.DirectoryInfo(sDirPath);
 
             foreach (var item in DI.GetFiles())
@@ -604,7 +606,8 @@ namespace RecipeParsing
                             else if (fileSplit[j].Contains("site") && fileSplit[j].Contains("{"))
                             {
                                 string a = null;
-                                recipeConfig.ITEM_ID = fileSplit[j].Split(' ')[0] + fileSplit[j].Split(' ')[1];
+                                string itemasd = fileSplit[j].ToString();
+                                recipeConfig.ITEM_ID = fileSplit[j].Split(' ')[0] +" "+ fileSplit[j].Split(' ')[1];
                                 if (fileSplit[j + 1].Contains("loc"))
                                 {
 
@@ -624,7 +627,7 @@ namespace RecipeParsing
                                     recipeConfig.X_USL = calculationUsl(recipeConfig.RESULT_X_VALUE, recipeConfig.WB_VALUE);
                                     recipeConfig.Y_LSL = calculationLsl(recipeConfig.RESULT_Y_VALUE, recipeConfig.WB_VALUE);
                                     recipeConfig.Y_USL = calculationUsl(recipeConfig.RESULT_Y_VALUE, recipeConfig.WB_VALUE);
-                                    recipeConfig.VALID = valid(recipeConfig.WIRE_X_VALUE, recipeConfig.X_LSL, recipeConfig.X_USL, recipeConfig.WIRE_Y_VALUE, recipeConfig.Y_LSL, recipeConfig.Y_USL).ToString();
+                                    recipeConfig.VALID = valid(recipeConfig.RESULT_X_VALUE, recipeConfig.X_LSL, recipeConfig.X_USL, recipeConfig.RESULT_Y_VALUE, recipeConfig.Y_LSL, recipeConfig.Y_USL).ToString();
 
                                     recipeConfig.REVISION = null;
 
@@ -664,8 +667,8 @@ namespace RecipeParsing
 
         public bool valid(string x, string x_lsl, string x_usl, string y, string y_lsl, string y_usl)
         {
-            if (float.Parse(x_lsl) > float.Parse(x) || float.Parse(x_usl) < float.Parse(x)
-             || float.Parse(y_lsl) > float.Parse(y) || float.Parse(y_usl) < float.Parse(y))
+            if (float.Parse(x_lsl) < float.Parse(x) || float.Parse(x) < float.Parse(x_usl)
+             || float.Parse(y_lsl) < float.Parse(y) || float.Parse(y) < float.Parse(y_usl))
             {
                 return true;
             }
@@ -912,8 +915,8 @@ namespace RecipeParsing
                     filename = para.FILE_NAME;
                     paraId = para.ITEM_ID;
 
-                    string[] lines = File.ReadAllLines(Global.FilePath + "untgz_" + Global.RecipeName + "\\" + filename);
-                    sw = new StreamWriter(Global.FilePath + "untgz_" + Global.RecipeName + "\\" + filename, false);
+                    string[] lines = File.ReadAllLines(Global.FilePath + filename);
+                    sw = new StreamWriter(Global.FilePath + filename, false);
                     for (int i = 0 ; i < lines.Length ; i++)
                     {
                         //# symbol          = value    units    sys_type  parm_type    class   min     max     default
@@ -981,6 +984,7 @@ namespace RecipeParsing
         {
             string filename = string.Empty;
             string paraId = string.Empty;
+            string groupId = string.Empty;
 
             #region -- Parameter Change Save
             if (Global.changeKnsWireList.Count != 0)
@@ -993,8 +997,8 @@ namespace RecipeParsing
                     filename = wire.FILE_NAME;
                     paraId = wire.ITEM_ID;
 
-                    string[] lines = File.ReadAllLines(Global.FilePath + "untgz_" + Global.RecipeName + "\\" + filename);
-                    sw = new StreamWriter(Global.FilePath + "untgz_" + Global.RecipeName + "\\" + filename, false);
+                    string[] lines = File.ReadAllLines(Global.FilePath + filename);
+                    sw = new StreamWriter(Global.FilePath + filename, false);
                     for (int i = 0 ; i < lines.Length ; i++)
                     {
                         //# symbol          = value    units    sys_type  parm_type    class   min     max     default
