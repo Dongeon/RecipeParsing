@@ -621,8 +621,8 @@ namespace RecipeParsing
                                     recipeConfig.COMPARE_YN = "Y";
                                     recipeConfig.FILE_NAME = fileName;
                                     recipeConfig.WB_VALUE = "10";
-                                    recipeConfig.RESULT_X_VALUE = calculationResult(recipeConfig.MASTER_X_VALUE, recipeConfig.WIRE_X_VALUE);
-                                    recipeConfig.RESULT_Y_VALUE = calculationResult(recipeConfig.MASTER_Y_VALUE, recipeConfig.WIRE_Y_VALUE);
+                                    recipeConfig.RESULT_X_VALUE = calculationResult(masterxValue, recipeConfig.WIRE_X_VALUE);
+                                    recipeConfig.RESULT_Y_VALUE = calculationResult(masteryValue, recipeConfig.WIRE_Y_VALUE);
                                     recipeConfig.X_LSL = calculationLsl(recipeConfig.RESULT_X_VALUE, recipeConfig.WB_VALUE);
                                     recipeConfig.X_USL = calculationUsl(recipeConfig.RESULT_X_VALUE, recipeConfig.WB_VALUE);
                                     recipeConfig.Y_LSL = calculationLsl(recipeConfig.RESULT_Y_VALUE, recipeConfig.WB_VALUE);
@@ -660,6 +660,7 @@ namespace RecipeParsing
         {
             return (float.Parse(result) - float.Parse(wbValue)).ToString();
         }
+
         public string calculationUsl(string result, string wbValue)
         {
             return (float.Parse(result) + float.Parse(wbValue)).ToString();
@@ -681,7 +682,6 @@ namespace RecipeParsing
         {
 
         }
-    
         #region
         /*
         2019 Winpac Project
@@ -769,7 +769,6 @@ namespace RecipeParsing
                 8. .BND file 에서 읽어올 .ref 파일 읽어옴
             */
         #endregion
-
         /// <summary>
         /// 1. 이름변경 'Recipename.tgz', 2. TGZ 압축해제(untgz_RECIPENAME)
         /// </summary>
@@ -847,6 +846,7 @@ namespace RecipeParsing
         /// 3. Parameter(.PRM) Group ID = .WIR
         /// </summary>
         /// <param name="path"></param>
+        
         public List<string> GetGroupID(string path)
         {
             Dictionary<string, string> Data = new Dictionary<string, string>();
@@ -895,8 +895,6 @@ namespace RecipeParsing
 
             return null;
         }
-
-
 
         //-- save
         public void knsParameterChangeSave()
@@ -980,10 +978,11 @@ namespace RecipeParsing
             }
             #endregion
         }
+
         public void knsWiremapChangeSave()
         {
             string filename = string.Empty;
-            string paraId = string.Empty;
+            string wireId = string.Empty;
             string groupId = string.Empty;
 
             #region -- Parameter Change Save
@@ -995,7 +994,7 @@ namespace RecipeParsing
                 foreach (RecipeConfigKnsWm wire in Global.changeKnsWireList)
                 {
                     filename = wire.FILE_NAME;
-                    paraId = wire.ITEM_ID;
+                    wireId = wire.ITEM_ID;
 
                     string[] lines = File.ReadAllLines(Global.FilePath + filename);
                     sw = new StreamWriter(Global.FilePath + filename, false);
@@ -1007,10 +1006,10 @@ namespace RecipeParsing
                         //+ "\r" + para.PARA_MIN + "\r" + para.PARA_MAX + "\r" + para.PARA_DEF + "\r" + para.PARA_MIN + "\r" + para.PARA_MAX;
 
                         //-- unit 처리
-                        if (string.IsNullOrEmpty(wire.ITEM_UNIT))
-                        {
-                            wire.ITEM_UNIT = "no_units";
-                        }
+                        //if (string.IsNullOrEmpty(wire.ITEM_UNIT))
+                        //{
+                        //    wire.ITEM_UNIT = "no_units";
+                        //}
 
                         //-- value 값 min max 범위 내 설정
                         //int value = Convert.ToInt32(wire.PARA_VALUE);
@@ -1018,12 +1017,12 @@ namespace RecipeParsing
                         //int max = Convert.ToInt32(wire.PARA_MAX);
 
 
-                        //string hellyeah = wire.ITEM_ID + " = " + wire.PARA_VALUE + "       " + wire.ITEM_UNIT + "  " + wire.PARA_sys_type + "     " + wire.PARA_param_type + " " + wire.PARA_CLASS + " " + wire.PARA_MIN + " " + wire.PARA_MAX + " " + wire.PARA_DEF + "           " + wire.PARA_MIN + "        " + wire.PARA_MAX;
-                        if (lines[i].Contains(paraId))
+                        string hellyeah = string.Format("	loc		=	{0}	{1}	mils", wire.WIRE_X_VALUE, wire.WIRE_Y_VALUE);
+                        if (lines[i].Contains(wireId))
                         {
                             if (i == 0)
                             {
-                                for (int j = 1 ; j < lines.Length ; j++)
+                                for (int j = 0 ; j < lines.Length ; j++)
                                 {
                                     sw.WriteLine(lines[j]);
                                 }
@@ -1034,12 +1033,16 @@ namespace RecipeParsing
                                 for (int j = 0 ; j < i ; j++)
                                 {
                                     sw.WriteLine(lines[j]);
+                                    //-- site 1
                                 }
-                                //sw.WriteLine(hellyeah);
-                                for (int j = i + 1 ; j < lines.Length ; j++)
+
+                                sw.WriteLine(hellyeah);
+
+                                for (int j = i + 2 ; j < lines.Length ; j++)
                                 {
                                     sw.WriteLine(lines[j]);
                                 }
+
                                 sw.Close();
                             }
                             //-- 해당 라인 참조

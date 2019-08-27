@@ -16,9 +16,6 @@ namespace RecipeParsing
     public partial class Form1 : Form
     {
         //List<RecipeConfig> ParaList = null;
-
-
-
         public Form1()
         {
             InitializeComponent();
@@ -186,7 +183,6 @@ namespace RecipeParsing
             return result;
         }
 
-
         private void btnSave_Click(object sender, EventArgs e)
         {
             //-- SAVE
@@ -211,7 +207,6 @@ namespace RecipeParsing
             }
         }
 
-
         private void sAVEToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             //-- SAVE   
@@ -227,7 +222,6 @@ namespace RecipeParsing
             }
         }
 
-
         private void sAVEASToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //-- 저장, SaveAs
@@ -241,7 +235,7 @@ namespace RecipeParsing
         private void oPENDIRECTORYToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //--
-            string path1 = Global.FilePath + "untgz_" + Global.RecipeName;
+            string path1 = Global.FilePath;
             //string filepath = @path;
             System.Diagnostics.Process.Start(path1);
         }
@@ -330,16 +324,12 @@ namespace RecipeParsing
                     revision.Y_LSL = kns.calculationLsl(revision.RESULT_Y_VALUE, revision.WB_VALUE);
                     revision.Y_USL = kns.calculationUsl(revision.RESULT_Y_VALUE, revision.WB_VALUE);
 
-                    if(kns.valid(revision.RESULT_X_VALUE, revision.X_LSL, revision.X_USL, revision.RESULT_Y_VALUE, revision.Y_LSL, revision.Y_USL))
+                    if(!kns.valid(revision.RESULT_X_VALUE, revision.X_LSL, revision.X_USL, revision.RESULT_Y_VALUE, revision.Y_LSL, revision.Y_USL))
                     {
                         MessageBox.Show("out of range.");
+                        dataGridViewWM.DataSource = Global.KnsWireList;
                         return;
                     }
-                    //if (Convert.ToInt32(revision.PARA_VALUE) > Convert.ToInt32(revision.PARA_MAX) || Convert.ToInt32(revision.PARA_VALUE) < Convert.ToInt32(revision.PARA_MIN))
-                    //{
-                    //    MessageBox.Show("out of range.");
-                    //    return;
-                    //}
                 }
                 else
                 {
@@ -351,7 +341,10 @@ namespace RecipeParsing
                 //-- changeKnsParaList 의 중복 검사
 
                 if (Global.changeKnsWireList.Count == 0)
+                {
                     Global.changeKnsWireList.Add(revision);
+                    Global.KnsWireList[e.RowIndex] = revision;
+                } 
                 else
                 {
                     List<int> dblIndx = new List<int>();
@@ -359,7 +352,7 @@ namespace RecipeParsing
                     //-- set check list
                     for (int i = 0 ; i < Global.changeKnsWireList.Count ; i++)
                     {
-                        string checkGroupItem = Global.changeKnsParaList[i].GROUP_ID + "/" + Global.changeKnsWireList[i].ITEM_ID;
+                        string checkGroupItem = Global.changeKnsWireList[i].GROUP_ID + "/" + Global.changeKnsWireList[i].ITEM_ID;
                         string revisionGroupItem = revision.GROUP_ID + "/" + revision.ITEM_ID;
                         if (checkGroupItem == revisionGroupItem)
                         {
@@ -382,19 +375,19 @@ namespace RecipeParsing
                     }
                     dblIndx = null;
                     //-- Revision flag
-                    if (Global.changeKnsParaList.Count != 0 || Global.changeKnsWireList.Count != 0)
-                        lblStatus.Text = "Revision";
+                    //Global.changeKnsWireList.Add(revision);
+                    Global.KnsWireList[e.RowIndex] = revision;
+                    
                 }
-
-                Global.changeKnsWireList.Add(revision);
+                dataGridViewWM.DataSource = Global.KnsWireList;
                 revision = null;
+                if (Global.changeKnsParaList.Count != 0 || Global.changeKnsWireList.Count != 0)
+                    lblStatus.Text = "Revision";
             }
             else if (Global.FilePath.Contains("SKW"))
             {
 
             }
-
-
         }
     }
 }
